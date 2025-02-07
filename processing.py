@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
-import scipy.optimize
+from scipy.optimize import curve_fit
 from tkinter import *
 from matplotlib.figure import Figure 
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, 
@@ -23,9 +23,16 @@ except:
 # r = 1 #Helmholtz radius
 # Rp = 1 #resister measured across
 
-w_test = np.array([1,2,3,4])
-re_test = np.array([2,2,2,2])
-im_test = np.array([1,2,3,4])
+a = 3
+b = 4
+c = 1
+w_test = np.arange(1,10,0.5)
+re_test = (a * np.sin(w_test) + b) + np.random.normal(0, 0.2, size=len(w_test))
+im_test = (c * np.square(w_test)) - (b * w_test) + np.random.normal(0, 3, size=len(w_test))
+
+# h = np.array([5.0, 6.1, 7.2, 8.3, 9.4])
+# y1 = np.array([ 16.00,  18.42,  20.84,  23.26,  25.68])
+# y2 = np.array([-20.00, -25.50, -31.00, -36.50, -42.00])
 
 
 
@@ -68,29 +75,41 @@ class Probe_calibration():
     
     def re_curve(self, w, a, tau, tau_s):
         """ Real component of Vmeas/Vref """
-        y = (a * self.C * (w ** 2) * (tau_s - tau)) / (1 + (tau_s * w) ** 2)
-        return y
+        # y = (a * self.C * (w ** 2) * (tau_s - tau)) / (1 + (tau_s * w) ** 2)
+        # return y
+        return a * np.sin(w) + tau
 
     def im_curve(self, w, a, tau, tau_s):
         """ Imaginary component of Vmeas/Vref"""
-        y = (a * self.C ((w ** 3) * tau * tau_s + w)) / (1 + (tau_s * w) ** 2)
-        return y
+        # y = (a * self.C ((w ** 3) * tau * tau_s + w)) / (1 + (tau_s * w) ** 2)
+        # return y
+        return (tau_s * np.square(w)) - (tau * w)
     
-    def calibrate(self):
-        self.a = 1
-        self.tau = 1
-        self.tau_s = 1
+    def combined_curves(self, combo_w, a, tau, tau_s):
+        """ Combine real and imaginary parts into one function"""
+
+        extract_re = combo_w[:len(self.re_data)]
+        extract_im = combo_w[len(self.im_data):]
+
+        result_re = self.re_curve(extract_re, a, tau, tau_s)
+        result_im = self.im_curve(extract_im, a, tau, tau_s)
+
+        return np.append(result_re, result_im)
+    
+    def calibrate(self, initial_guess: np.array = [1,1,1]):
+
+        x_combo = np.hstack((self.omega_data, self.omega_data))
+        y_combo = np.hstack((self.re_data, self.im_data))
+
+        fittedParameters, pcov = curve_fit(self.combined_curves, x_combo, y_combo, initial_guess)
+
+        self.a, self.tau, self.tau_s = fittedParameters
+        print(fittedParameters)
+        self.covariance = pcov
         return
 
-    def graph(self, data_set: str, add_fit: bool = False):
+    def graph(self, data_set: str = 'both', add_fit: bool = False):
 
-        if add_fit:
-            try:
-                a = self.a
-                tau = self.tau
-                tau_s = self.tau_s
-            except:
-                raise ValueError('Fit parameters not generated, run calibration method first')
         
         if data_set not in ('re', 'im', 'both'):
             raise ValueError("Data set must be one of 're', or 'im'")
@@ -98,9 +117,6 @@ class Probe_calibration():
         x = self.omega_data
         y_re = self.re_data
         y_im = self.im_data
-            
-
-
 
         if data_set == 're':
             plt.scatter(x, y_re)
@@ -120,41 +136,34 @@ class Probe_calibration():
             plt.ylabel(r'Im$ (V_{\text{meas}} / V_{\text{ref}})$')
             plt.xlabel(r'$\omega$ (Hz)')
 
+        if add_fit:
+            try:
+                a = self.a
+                tau = self.tau
+                tau_s = self.tau_s
+            except:
+                raise ValueError('Fit parameters not generated, run calibration method first')
+
+            y_re_fit = self.re_curve(x, a, tau, tau_s)
+            y_im_fit = self.im_curve(x, a, tau, tau_s)
+
+            if data_set == 're':
+                plt.plot(x, y_re_fit, label="Fit")
+            elif data_set == 'im':
+                plt.plot(x, y_im_fit, label="Fit")
+            elif data_set == 'both':
+                plt.subplot(2,1,1)
+                plt.plot(x, y_re_fit, label="Fit")
+                plt.legend()
+                plt.subplot(2,1,2)
+                plt.plot(x, y_im_fit, label="Fit")
+                plt.legend()
+
         plt.show()
-
-
-        
         return
     
+    
 
-foo = Probe_calibration(w_test, re_test, im_test)
-
-foo.graph(data_set = 'both')
-
-
-
-
-
-      
-# def model_func(x, a, b):
-#     return a * np.sin(b * x)
-# np.random.seed(0)
-# xdata = np.linspace(0, 15, 100)
-# y = model_func(xdata, 2.5, 0.8)
-# ydata = y + 0.2 * np.random.normal(size=len(xdata))
-# plt.figure(figsize=(8, 6))
-# plt.scatter(xdata, ydata, label='Data with noise')
-
-# # Fitting the function to the data using curve_fit
-# popt, pcov = scipy.optimize.curve_fit(model_func, xdata, ydata, method='dogbox')
-# # Getting the optimized parameters
-# a_opt, b_opt = popt
-# print(f'Optimized parameters: a = {a_opt}, b = {b_opt}')
-# plt.plot(xdata, model_func(xdata, *popt), 'r-', label='Fitted curve')
-
-# plt.xlabel('X data')
-# plt.ylabel('Y data')
-# plt.title('Curve Fitting Example')
-# plt.legend()
-# plt.grid(True)
-# plt.show()
+foo = Probe_calibration(w_test, re_test, im_test, r=1, Rp=1)
+foo.calibrate(initial_guess=[2, 5, 2])
+foo.graph(add_fit=True)

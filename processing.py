@@ -5,6 +5,8 @@ from tkinter import *
 from matplotlib.figure import Figure 
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, 
 NavigationToolbar2Tk) 
+import json
+import os
 
 plt.rcParams['text.usetex'] = True
 plt.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
@@ -36,11 +38,22 @@ im_test = (c * np.square(w_test)) - (b * w_test) + np.random.normal(0, 3, size=l
 
 
 
-class Probe_calibration():
+class ProbeCalibration():
 
-    def __init__(self, omega_data: np.array, re_data: np.array, im_data: np.array, r: float, Rp: float, N: int=10, g: int = 1):
+    def __init__(self):
+        "Creates probe object, either import calibration data with 'import data' or load calibration values with 'load'"
+        pass
 
-        """Ensure the data passed into Probe_calibration class is of the right type and size
+    def __str__(self):
+        "prints calibrated values with uncertainties at 4 sig figs"
+        try:
+            a, tau, tau_s = self.a, self.tau, self.tau_s
+            return f'a={a[0]:.4g}±{a[1]:.4g}, \ntau={tau[0]:.4g}±{tau[1]:.4g}, \ntau_s={tau_s[0]:.4g}±{tau_s[1]:.4g}'
+        except:
+            return f'probeCalibration object stored at <{hex(id(self))}>'
+    
+    def import_data(self, omega_data: np.array, re_data: np.array, im_data: np.array, r: float, Rp: float, N: int=10, g: int = 1):
+        """Ensure the data passed into ProbeCalibration class is of the right type and size
 
         Args:
             omega_data (nd.array): Frequency in Hz
@@ -48,8 +61,8 @@ class Probe_calibration():
             im_data (nd.array): Imaginary part of V_meas / V_ref
             r (float): Helmholz radius in meters
             Rp (float): Resistance of resister measured across in ohms 
-            N (int, optional): Number loops, counting both twin-twisted wires
-            g (int, optional): Amplifier gain
+            N (int, optional): Number loops, counting both twin-twisted wires. Defaults to 10
+            g (int, optional): Amplifier gain. Defaults to 1
 
         Raises:
             TypeError: Checks to see if data is an ndarray
@@ -71,6 +84,50 @@ class Probe_calibration():
 
         mu_0 = 1.25663706127e-6 # Permeability of free space in N/A^2
         self.C = ((16 * N * g * mu_0) / ((5 ** 1.5) * r * Rp))
+
+    def load(self, path, probe_name, axis):
+        if not os.path.exists(path):
+            raise FileNotFoundError
+        if axis not in ['x axis', 'y axis', 'z axis']:
+            raise ValueError(f'Axis {axis} does not exist, axis must be either "x axis", "y axis", or "z axis"')
+
+        with open(path, 'r') as file:
+            data = json.load(file)
+            try:
+                probe_index = [probe['Probe name'] for probe in data].index(probe_name) 
+                probe = data[probe_index]
+            except:
+                raise ValueError(f'Probe "{probe_name}" does not exist')
+        
+        self.a = probe['Calibration data'][axis]['a']
+        self.tau = probe['Calibration data'][axis]['tau']
+        self.tau_s = probe['Calibration data'][axis]['tau_s']
+
+        # print(probe)
+
+            # print(probe_index)
+
+            # probe_names = [probe['Probe name'] for probe in data]
+            # if probe_name in probe_names:
+            #     probe_index = probe_names[probe_name]
+            #     print("True")
+            # if 'Probe name' in [probe['Probe name'] for probe in data]:
+            #     print("foo")
+            #     # self.a = probe['Calibration data'][axis]['a']
+            #     # self.tau = probe['Calibration data'][axis]['tau']
+            #     # self.tau_s = probe['Calibration data'][axis]['tau_s']
+            # else:
+            #     raise ValueError(f'No saved parameters for axis "{axis}" of probe "{probe_name}"')
+        pass
+
+    def save(self, probe_name, path):
+        # 
+        try:
+            a, tau, tau_s = self.a, self.tau, self.tau_s
+        except:
+            raise ValueError('Fit parameters not generated, run calibration method first')
+        
+        pass
 
     
     def re_curve(self, w, a, tau, tau_s):
@@ -96,21 +153,35 @@ class Probe_calibration():
 
         return np.append(result_re, result_im)
     
-    def calibrate(self, initial_guess: np.array = [1,1,1]):
+    def fit_curve(self, initial_guess: np.array = [1,1,1], sigma: float = None ):
+        """ Fits the model and saves the parameters
+
+        Args:
+            initial_guess (np.array, optional): Initial guess for a, tau, and tau_s. Defaults to [1,1,1].
+            sigma (float, optional): Standard deviation of errors in y_data. Defults to None
+        """
 
         x_combo = np.hstack((self.omega_data, self.omega_data))
         y_combo = np.hstack((self.re_data, self.im_data))
 
-        fittedParameters, pcov = curve_fit(self.combined_curves, x_combo, y_combo, initial_guess)
-
-        self.a, self.tau, self.tau_s = fittedParameters
-        print(fittedParameters)
-        self.covariance = pcov
+        popt, pcov = curve_fit(self.combined_curves, x_combo, y_combo, initial_guess, sigma = sigma)
+        self.a, self.tau, self.tau_s = zip(popt, np.square(np.diag(pcov)))
+        # print(fittedParameters)
+        # self.covariance = pcov
+        # print()
         return
 
     def graph(self, data_set: str = 'both', add_fit: bool = False):
+        """ Plotting tool for calibration data. Can include 
 
-        
+        Args:
+            data_set (str, optional): Plot either the real component 're', the imaginary component 'im', or both 'both'. Defaults to 'both'.
+            add_fit (bool, optional): Whether to plot the fitted curve. Defaults to False.
+
+        Raises:
+            ValueError: Data_set value not 're', 'im' or 'both'
+            ValueError: Trying to plot the fit before parameters generated
+        """
         if data_set not in ('re', 'im', 'both'):
             raise ValueError("Data set must be one of 're', or 'im'")
         
@@ -144,8 +215,8 @@ class Probe_calibration():
             except:
                 raise ValueError('Fit parameters not generated, run calibration method first')
 
-            y_re_fit = self.re_curve(x, a, tau, tau_s)
-            y_im_fit = self.im_curve(x, a, tau, tau_s)
+            y_re_fit = self.re_curve(x, a[0], tau[0], tau_s[0])
+            y_im_fit = self.im_curve(x, a[0], tau[0], tau_s[0])
 
             if data_set == 're':
                 plt.plot(x, y_re_fit, label="Fit")
@@ -162,8 +233,19 @@ class Probe_calibration():
         plt.show()
         return
     
-    
 
-foo = Probe_calibration(w_test, re_test, im_test, r=1, Rp=1)
-foo.calibrate(initial_guess=[2, 5, 2])
-foo.graph(add_fit=True)
+if __name__ == '__main__':
+    bar = ProbeCalibration()
+    bar.load('calibration.json', "test2", "x axis")
+    print(bar)
+
+    foo = ProbeCalibration()
+    foo.import_data(w_test, re_test, im_test, r=1, Rp=1)
+    foo.fit_curve(initial_guess=[2, 5, 2])
+    foo.graph(add_fit=True)
+
+
+# foo = ProbeCalibration(w_test, re_test, im_test, r=1, Rp=1)
+# foo.fit_curve(initial_guess=[2, 5, 2])
+# # foo.graph(add_fit=True)
+# print(foo)

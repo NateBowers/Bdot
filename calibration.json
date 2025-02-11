@@ -1,0 +1,46 @@
+[
+    {
+        "Probe name": "test",
+        "Calibration data": {
+            "x axis": {
+                "a": [1,1],
+                "tau": [2,2],
+                "tau_s": [3,3]
+            },
+            "y axis": {
+                "a": [4,4],
+                "tau": [5,5],
+                "tau_s": [6,6]
+            },
+            "z axis": {
+                "a": [7,7],
+                "tau": [8,8],
+                "tau_s": [9,9]
+            }
+        },
+        "Notes": "No notes",
+        "Images": ["Link 1", "Link 2"]
+    },
+    {
+        "Probe name": "test2",
+        "Calibration data": {
+            "x axis": {
+                "a": [1,1],
+                "tau": [2,2],
+                "tau_s": [3,3]
+            },
+            "y axis": {
+                "a": [4,4],
+                "tau": [5,5],
+                "tau_s": [6,6]
+            },
+            "z axis": {
+                "a": [7,7],
+                "tau": [8,8],
+                "tau_s": [9,9]
+            }
+        },
+        "Notes": "No notes",
+        "Images": ["Link 1", "Link 2"]
+    }
+]

@@ -1,0 +1,73 @@
+@startuml
+title B-dot Calibration Code
+start
+note right
+    Input:
+    • Raw data (both ""V_meas"" and ""V_ref"")
+    • Metadata (Probe name and axis)
+end note
+group Initialization
+    if (Proper data format?) then (no)
+        #red:error;
+        kill
+    else (yes)
+    endif
+ 
+
+    if (Probe and axis exists?) then (no)
+    (yes     ) elseif (Rewrite?) then (yes)
+    else (no)
+        #red:terminate;
+        kill
+    endif
+end group
+
+
+
+
+split
+->Raw data \n;
+    group Signal Processing
+        split
+            :Hilbert Transform;
+            -> Phase data;
+        split again
+            -> Magnitude data;
+        end split
+        :Convert to Re,Im;
+        :Fit curve;
+        ->\nFit parameters;
+    end group
+
+split again
+ ->Metadata;
+end split
+
+:Package data into dict for JSON;
+
+:Save data;
+note right
+    Use Read/Write code
+end note
+
+' group Save data
+' if (probe exists?) then (no)
+'     :Create new database entry;
+'     :Write data;
+' else (yes)
+'     :Read probe data;
+'     if (Axis exists?) then (no)
+'     :Write data;
+'     else (yes)
+'     :Overwrite existing\naxis data;
+'     endif
+' endif
+' end group
+
+:Display calibration values,\nconfirmation of completion;
+
+
+
+stop
+
+@enduml

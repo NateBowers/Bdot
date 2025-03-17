@@ -1,0 +1,42 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+actor User
+actor Database
+rectangle BdotCode {
+    User --> (Create New Probe)
+    User ---> (Update Existing Probe)
+    User ---> (View Current Probe)
+    User --> (Reconstruct Field)
+
+    (Create New Probe) --> (Calibrate)
+    (Calibrate) ..> (Write Database) :Store
+    (Create New Probe) ..> (Write Database) :Create new database entry
+
+    (Update Existing Probe) <|- (Update Calibration)
+    (Update Existing Probe) <|-- (Update Metadata)
+
+    (Update Calibration) <. (Calibrate)
+
+    (View Current Probe) <.. (Read Database) :Query
+
+    (Reconstruct Field) <.. (Read Database) :Retriev Probe Info
+
+    (Update Existing Probe) ..> (Write Database) :Store
+
+    (Update Existing Probe) <.. (Read Database) :List Current Probes
+
+
+
+    (Read Database) <-- Database
+    (Write Database) --> Database
+
+
+    ' User --> (Calibrate) 
+    ' User --> (LoadData)
+    ' User --> (ReconstructField)
+    ' (Calibrate) .> (LoadData) : include
+    ' (ReconstructField) .> (LoadData) :include
+    ' (LoadData) --> Database
+}
+@enduml

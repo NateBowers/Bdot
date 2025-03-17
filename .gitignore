@@ -1,2 +1,4 @@
 .python-version
 requirements.txt
+.vscode/
+.gitignore

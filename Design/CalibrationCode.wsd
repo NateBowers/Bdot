@@ -1,4 +1,4 @@
-@startuml
+@startuml Activity
 title B-dot Calibration Code
 start
 note right

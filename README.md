@@ -6,7 +6,7 @@ This was written and tested with Python 3.13.1, but it will likely work in other
 
 # Install
 
-1. Make sure you have python and github installed with brew (instructions to install brew are [here](https://brew.sh/)
+1. Make sure you have python and github installed with brew (instructions to install brew are [here](https://brew.sh/))
    1. In a terminal window, run `brew install git`
 2. Clone the git repo (MAC)
    1. Navigate to the directory you want to clone the repo to in a terminal window

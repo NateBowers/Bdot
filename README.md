@@ -13,6 +13,7 @@ This was written and tested with Python 3.13.1, but it will likely work in other
    2. Run `git clone https://github.com/NateBowers/Bdot.git`
 3. Run `pip install -r requirements.txt` 
 4. Run `Code/main.py`
+   1. It is recommended you run this in an IDE rather than straight in a terminal. I like VSCode
 5. Add data to `Data/`
    1. Create a new test file for each test
    2. Change the file locations in `main.py` as needed (do **not** push those changes to the repo)

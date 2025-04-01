@@ -1,0 +1,4 @@
+To generate test data files from Meinecke's data, I kept these columns:
+#,"""a_ref""","""b_ref""","""a_meas""","""b_meas""",w(rad),Gain,Im(V),Re(V)
+In that order. The first 5 columns can generate the Im(V) and Re(V) info
+with the main.py file

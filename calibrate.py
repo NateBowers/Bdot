@@ -17,6 +17,8 @@ args = parser.parse_args()
 data_path = args.data_path
 output_dir = args.output_dir
 
+print('Beginning calibration routine...')
+
 
 
 # Checks if output_dir exists and if overwrite flag is set
@@ -49,3 +51,5 @@ for path in paths:
     probe = FitProbe(freq, v_ratio_re, v_ratio_im, factor, os.path.basename(path))
     probe.calibrate(verbose=args.verbose)
     probe.graph(show=False, save=True, save_path=save_path)
+
+print(f'Successfully calibrated all probes in {data_path} and stored results in {output_dir}')

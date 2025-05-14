@@ -46,7 +46,7 @@ elif os.path.isdir(data_path):
 # Runs calibration code on each path and saves it to output_dir
 for path in paths:
     name, _ = os.path.splitext(os.path.basename(path))
-    save_path = output_dir + '/' + name + '.png'
+    save_path = os.path.join(output_dir, name) + '.png'
     freq, v_ratio_re, v_ratio_im, factor = load_data_UCLA(path)
     probe = FitProbe(freq, v_ratio_re, v_ratio_im, factor, os.path.basename(path))
     probe.calibrate(verbose=args.verbose)

@@ -30,10 +30,11 @@ There are also two optional flags:
 
 To run a test calibration, run the following command in terminal
 ```
-    python calibrate.py test_data/ output_directory/ 
+    python calibrate.py test_data/ test_output/ 
 ```
 If that does not work, replace `python` with `python3`. If that does not work, check what the alias for python on your system is. 
 
+See if the contents of `test_output/` and `test_output_expected/` match to make sure the test ran successfully
 
 ## Actual calibration
 

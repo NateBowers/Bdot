@@ -1,5 +1,2 @@
 .DS_store
 __pycache__
-*.png
-*.xlsx
-test_data/sheets
